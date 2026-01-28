@@ -28,13 +28,11 @@ This application uses **Vercel KV (Redis)** for persistence.
    npm install
    ```
 3. Set up Environment Variables:
-   Create a `.env.local` file with your Vercel KV credentials (or local redis connection string if adapted):
+   Create a `.env.development.local` file with your Redis connection string:
    ```env
-   KV_URL="redis://..."
-   KV_REST_API_URL="https://..."
-   KV_REST_API_TOKEN="..."
+   REDIS_URL="redis://..."
    ```
-   *Note: For local dev without Vercel CLI, ensure you have these vars set from your Vercel project settings.*
+   *Note: On Vercel, this variable is automatically provided if you use Vercel KV.*
 
 4. Run the development server:
    ```bash
