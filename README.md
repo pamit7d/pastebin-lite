@@ -9,8 +9,9 @@ A simple, robust pastebin application built with Next.js and Vercel KV (Redis).
 - **Deterministic Testing**: Supports `TEST_MODE` via `x-test-now-ms` header.
 
 ## Persistence
-This application uses **Vercel KV (Redis)** for persistence.
-- **Reason**: Meets the requirement for a serverless-safe persistent store that works across cold starts and concurrent requests.
+This application uses **Redis** (provisioned via Vercel KV) for persistence.
+- **Client**: Standard `redis` npm package (TCP connection).
+- **Reason**: Chosen for low-latency, serverless compatibility, and standard protocol checking.
 - **Schema**: Data is stored as Redis Hashes (`paste:<id>`) containing content, view counts, and expiry timestamps.
 - **Atomic Operations**: View limits are enforced using `HINCRBY` to prevent race conditions under load.
 
