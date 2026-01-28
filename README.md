@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pastebin-Lite
 
-## Getting Started
+A simple, robust pastebin application built with Next.js and Vercel KV (Redis).
 
-First, run the development server:
+## Features
+- Create text pastes with optional **Time-to-Live (TTL)**.
+- Create text pastes with optional **Max View Limits**.
+- Shareable links.
+- **Deterministic Testing**: Supports `TEST_MODE` via `x-test-now-ms` header.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Persistence
+This application uses **Vercel KV (Redis)** for persistence.
+- **Reason**: Meets the requirement for a serverless-safe persistent store that works across cold starts and concurrent requests.
+- **Schema**: Data is stored as Redis Hashes (`paste:<id>`) containing content, view counts, and expiry timestamps.
+- **Atomic Operations**: View limits are enforced using `HINCRBY` to prevent race conditions under load.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How to Run Locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
+- Node.js (v18+)
+- A Vercel accounts (for Vercel KV) OR a local Redis instance.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Setup
 
-## Learn More
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up Environment Variables:
+   Create a `.env.local` file with your Vercel KV credentials (or local redis connection string if adapted):
+   ```env
+   KV_URL="redis://..."
+   KV_REST_API_URL="https://..."
+   KV_REST_API_TOKEN="..."
+   ```
+   *Note: For local dev without Vercel CLI, ensure you have these vars set from your Vercel project settings.*
 
-To learn more about Next.js, take a look at the following resources:
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Open [http://localhost:3000](http://localhost:3000) to create a paste.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API Endpoints
 
-## Deploy on Vercel
+- **POST /api/pastes**: Create a paste.
+- **GET /api/pastes/:id**: Fetch a paste (JSON).
+- **GET /p/:id**: View a paste (HTML).
+- **GET /api/healthz**: Health check.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Design Decisions
+- **Next.js App Router**: Used for modern, server-side rendering and API route handling.
+- **Availability Logic**: Logic is shared between API and HTML views. Pastes are checked for expiry (time) and view limits *before* serving.
+- **Concurrency**: `HINCRBY` is used to atomically increment view counts. An additional check prevents serving if the increment pushed the count over the limit (handling race conditions).
