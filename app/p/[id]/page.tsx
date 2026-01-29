@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { headers } from 'next/headers';
+import FormattedDate from '@/app/components/FormattedDate';
 
 export default async function PastePage({
     params,
@@ -10,9 +11,16 @@ export default async function PastePage({
     const { id } = await params;
 
     // Extract test time header if present to ensure deterministic testing matches API behavior
+    // Only accepted if TEST_MODE=1 is set in environment
     const headersList = await headers();
-    const testTimeHeader = headersList.get('x-test-now-ms');
-    const simulatedTime = testTimeHeader ? parseInt(testTimeHeader, 10) : undefined;
+    let simulatedTime: number | undefined;
+
+    if (process.env.TEST_MODE === '1') {
+        const testTimeHeader = headersList.get('x-test-now-ms');
+        if (testTimeHeader) {
+            simulatedTime = parseInt(testTimeHeader, 10);
+        }
+    }
 
     const paste = await db.getPaste(id, simulatedTime);
 
@@ -30,14 +38,12 @@ export default async function PastePage({
                         </h1>
                         <div className="flex space-x-4 text-xs text-gray-500">
                             {paste.expires_at ? (
-                                <span title={new Date(paste.expires_at).toString()}>
-                                    Expires: {new Date(paste.expires_at).toLocaleString()}
-                                </span>
+                                <FormattedDate timestamp={paste.expires_at} label="Expires" />
                             ) : (
                                 <span className="text-green-600">Never Expires</span>
                             )}
                             <span>•</span>
-                            <span>Created: {new Date(paste.created_at).toLocaleDateString()}</span>
+                            <FormattedDate timestamp={paste.created_at} label="Created" />
                         </div>
                     </div>
                     <div className="px-4 py-5 sm:p-6 bg-white">

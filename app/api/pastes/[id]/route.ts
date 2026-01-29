@@ -8,11 +8,16 @@ export async function GET(
     try {
         const { id } = await params;
 
-        // Check for simulated time header
-        const testTimeHeader = req.headers.get('x-test-now-ms');
-        const simulatedTime = testTimeHeader ? parseInt(testTimeHeader, 10) : undefined;
-        if (testTimeHeader && isNaN(simulatedTime!)) {
-            return NextResponse.json({ error: 'Invalid x-test-now-ms header' }, { status: 400 });
+        // Check for simulated time header (Only in TEST_MODE)
+        let simulatedTime: number | undefined;
+        if (process.env.TEST_MODE === '1') {
+            const testTimeHeader = req.headers.get('x-test-now-ms');
+            if (testTimeHeader) {
+                simulatedTime = parseInt(testTimeHeader, 10);
+                if (isNaN(simulatedTime)) {
+                    return NextResponse.json({ error: 'Invalid x-test-now-ms header' }, { status: 400 });
+                }
+            }
         }
 
         const paste = await db.getPaste(id, simulatedTime);
